@@ -1,4 +1,4 @@
-#! /home/zixuanwe/miniconda3/bin/python
+#! /usr/bin/python
 # coding: utf-8
 import io
 import argparse
