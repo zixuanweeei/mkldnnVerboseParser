@@ -60,7 +60,7 @@ def parse_all(string):
   print("\n")
 
   if args.dest != "":
-    result.to_csv(args.dest, index=False)
+    result.to_csv(args.dest)
 
   # writer = pd.ExcelWriter("MKLDNN_profiler.xlsx", mode="a")
   # stats.to_excel(writer, sheet_name=mode)
