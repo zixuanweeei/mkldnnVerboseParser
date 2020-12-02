@@ -15,21 +15,21 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   verbose = pd.read_csv(args.file, header=None, delimiter=',')
-  verbose.columns = ['Item', 'Status', 'Device', 'Op', 'Type', 'Prop', 'Format', 'Num', 'Shape',
-                     'Millisec']
+  verbose.columns = ['mode', 'action', 'device', 'primitive', 'implementation', 'propagation', 'data', 'attributes', 'algorithm',
+                     'problem', 'latency']
   verbose.fillna('gemm', inplace=True)
 
   # check repeat pattern
   last_verbose = verbose.iloc[-1, :]
   row_id = verbose.shape[0] - 2
   for _ in range(verbose.shape[0]):
-    equality = last_verbose.loc['Op':'Shape'] == verbose.loc[row_id, 'Op':'Shape']
+    equality = last_verbose.loc['primitive':'problem'] == verbose.loc[row_id, 'primitive':'problem']
     if equality.all():
       span = verbose.shape[0] - 1 - row_id
       row = verbose.shape[0] - 1
       exact = True
       for i in range(span):
-        eqly = verbose.loc[row - i, 'Op':'Shape'] == verbose.loc[row - i - span, 'Op':'Shape']
+        eqly = verbose.loc[row - i, 'primitive':'problem'] == verbose.loc[row - i - span, 'primitive':'problem']
         if not eqly.all():
           exact = False
       if exact:
@@ -40,10 +40,10 @@ if __name__ == "__main__":
   drystart = verbose.shape[0] - dryrun * span
   dryverbose = verbose.loc[drystart:, :]
   print("Span: {}, Log number: {}".format(span, dryverbose.shape[0]))
-  shapes = dryverbose.loc[:, 'Shape'].values.reshape((-1, span))
+  shapes = dryverbose.loc[:, 'data'].values.reshape((-1, span))
   if not (shapes == shapes[0]).all():
     raise RuntimeError("Dirty verbose.")
-  millisecs = dryverbose.loc[:, 'Millisec'].values.reshape((-1, span)).transpose()
+  millisecs = dryverbose.loc[:, 'latency'].values.reshape((-1, span)).transpose()
   millisecs = pd.DataFrame(millisecs, columns=[str(i) for i in range(millisecs.shape[-1])])
   millisecs_aggregate = millisecs.agg(['sum', 'mean', 'min', 'max'], axis=1).reset_index(drop=True)
   items = dryverbose.iloc[:span, :-1].reset_index(drop=True)
@@ -52,6 +52,6 @@ if __name__ == "__main__":
   print(filename)
   result.to_excel(filename, index=False)
 
-  ops = result.loc[:, ['Op', 'sum']]
-  ops_aggregate = ops.groupby('Op').agg(['count', 'sum'])
+  ops = result.loc[:, ['primitive', 'sum']]
+  ops_aggregate = ops.groupby('primitive').agg(['count', 'sum'])
   print(ops_aggregate)
